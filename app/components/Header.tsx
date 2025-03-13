@@ -31,6 +31,9 @@ const Header = () => {
             <Link href="/reports" className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
               Reports
             </Link>
+            <Link href="/chat" className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+              Chat Assistant
+            </Link>
           </nav>
         </div>
       </div>

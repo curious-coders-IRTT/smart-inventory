@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState, KeyboardEvent } from 'react';
+import React, { useState, KeyboardEvent, useEffect } from 'react';
 import OpenAI from 'openai';
 import Layout from '../components/Layout';
 
 interface Message {
   text: string;
   isUser: boolean;
-  timestamp: Date;
+  timestamp: string; // Change to string to avoid serialization issues
 }
 
 interface Branch {
@@ -49,6 +49,46 @@ export default function ChatPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState<string>('all');
 
+  // Load messages from localStorage when component mounts
+  useEffect(() => {
+    try {
+      const savedMessages = localStorage.getItem('chatMessages');
+      const savedBranch = localStorage.getItem('selectedBranch');
+      
+      if (savedMessages) {
+        const parsedMessages = JSON.parse(savedMessages);
+        setMessages(parsedMessages);
+      }
+      
+      if (savedBranch) {
+        setSelectedBranch(savedBranch);
+      }
+    } catch (error) {
+      console.error('Error loading saved messages:', error);
+      localStorage.removeItem('chatMessages');
+    }
+  }, []);
+
+  // Save messages to localStorage whenever they change
+  useEffect(() => {
+    try {
+      localStorage.setItem('chatMessages', JSON.stringify(messages));
+    } catch (error) {
+      console.error('Error saving messages:', error);
+    }
+  }, [messages]);
+
+  // Save selected branch whenever it changes
+  useEffect(() => {
+    localStorage.setItem('selectedBranch', selectedBranch);
+  }, [selectedBranch]);
+
+  // Function to clear chat history
+  const clearChat = () => {
+    setMessages([]);
+    localStorage.removeItem('chatMessages');
+  };
+
   const getBranchData = async (branchId: string) => {
     try {
       const response = await fetch('/api/fetch-data', {
@@ -88,11 +128,10 @@ Please provide a clear and concise answer based on the data provided. If compari
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
 
-    // Add user message to chat
     const userMessage: Message = {
       text: inputMessage,
       isUser: true,
-      timestamp: new Date(),
+      timestamp: new Date().toISOString(), // Store as ISO string
     };
 
     setMessages(prev => [...prev, userMessage]);
@@ -100,17 +139,14 @@ Please provide a clear and concise answer based on the data provided. If compari
     setIsLoading(true);
 
     try {
-      // Get data based on selected branch
       const data = await getBranchData(selectedBranch);
       
       if (!data) {
         throw new Error('Failed to fetch data');
       }
 
-      // Generate prompt with context
       const prompt = generatePrompt(data, inputMessage);
 
-      // Call OpenAI API
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -125,11 +161,10 @@ Please provide a clear and concise answer based on the data provided. If compari
 
       const result = await response.json();
       
-      // Add bot response to chat
       const botMessage: Message = {
         text: result.answer,
         isUser: false,
-        timestamp: new Date(),
+        timestamp: new Date().toISOString(), // Store as ISO string
       };
 
       setMessages(prev => [...prev, botMessage]);
@@ -138,7 +173,7 @@ Please provide a clear and concise answer based on the data provided. If compari
       const errorMessage: Message = {
         text: "Sorry, I couldn't process your request. Please try again.",
         isUser: false,
-        timestamp: new Date(),
+        timestamp: new Date().toISOString(), // Store as ISO string
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
@@ -154,9 +189,19 @@ Please provide a clear and concise answer based on the data provided. If compari
 
   return (
     <Layout>
-      <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">Chat Assistant</h1>
+      <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 h-[calc(100vh-4rem)]">
+        <div className="max-w-4xl mx-auto h-full flex flex-col">
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Chat Assistant</h1>
+            {messages.length > 0 && (
+              <button
+                onClick={clearChat}
+                className="px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors duration-200"
+              >
+                Clear Chat
+              </button>
+            )}
+          </div>
           
           {/* Branch Selection */}
           <div className="mb-6">
@@ -179,28 +224,34 @@ Please provide a clear and concise answer based on the data provided. If compari
           </div>
 
           {/* Chat Messages */}
-          <div className="bg-white rounded-lg shadow-lg p-4 mb-4 h-[500px] overflow-y-auto">
-            {messages.map((message, index) => (
-              <div
-                key={index}
-                className={`mb-4 ${
-                  message.isUser ? 'text-right' : 'text-left'
-                }`}
-              >
+          <div className="flex-1 bg-white rounded-lg shadow-lg p-4 mb-4 overflow-y-auto">
+            {messages.length === 0 ? (
+              <div className="flex items-center justify-center h-full text-gray-500">
+                Start a conversation by typing a message below
+              </div>
+            ) : (
+              messages.map((message, index) => (
                 <div
-                  className={`inline-block p-3 rounded-lg ${
-                    message.isUser
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-100 text-gray-800'
+                  key={index}
+                  className={`mb-4 ${
+                    message.isUser ? 'text-right' : 'text-left'
                   }`}
                 >
-                  <p className="text-sm">{message.text}</p>
-                  <span className="text-xs opacity-75">
-                    {message.timestamp.toLocaleTimeString()}
-                  </span>
+                  <div
+                    className={`inline-block p-3 rounded-lg ${
+                      message.isUser
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-gray-100 text-gray-800'
+                    }`}
+                  >
+                    <p className="text-sm">{message.text}</p>
+                    <span className="text-xs opacity-75">
+                      {new Date(message.timestamp).toLocaleTimeString()}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
             {isLoading && (
               <div className="text-left">
                 <div className="inline-block p-3 rounded-lg bg-gray-100">
@@ -214,27 +265,29 @@ Please provide a clear and concise answer based on the data provided. If compari
             )}
           </div>
 
-          {/* Input Area */}
-          <div className="flex space-x-4">
-            <input
-              type="text"
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Type your question here..."
-              className="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <button
-              onClick={handleSendMessage}
-              disabled={isLoading || !inputMessage.trim()}
-              className={`px-6 py-3 rounded-lg font-semibold text-white ${
-                isLoading || !inputMessage.trim()
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-blue-500 hover:bg-blue-600'
-              }`}
-            >
-              Send
-            </button>
+          {/* Input Area - Fixed at bottom on mobile */}
+          <div className="sticky bottom-0 left-0 right-0 bg-white p-4 border-t border-gray-200">
+            <div className="flex space-x-4 max-w-4xl mx-auto">
+              <input
+                type="text"
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Type your question here..."
+                className="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <button
+                onClick={handleSendMessage}
+                disabled={isLoading || !inputMessage.trim()}
+                className={`px-6 py-3 rounded-lg font-semibold text-white ${
+                  isLoading || !inputMessage.trim()
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-blue-500 hover:bg-blue-600'
+                }`}
+              >
+                Send
+              </button>
+            </div>
           </div>
         </div>
       </div>

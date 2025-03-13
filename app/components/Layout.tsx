@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 
 interface LayoutProps {
@@ -33,9 +34,18 @@ export default function Layout({ children }: LayoutProps) {
             </button>
             <Link 
               href="/"
-              className="ml-3 text-lg font-semibold text-gray-900 hover:text-blue-600 transition-colors duration-200"
+              className="ml-3 flex items-center group"
             >
-              Apollo Hospital
+              <Image
+                src="/apollo_logo.svg"
+                alt="Apollo Logo"
+                width={32}
+                height={32}
+                className="h-8 w-auto"
+              />
+              <span className="ml-2 text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors duration-200">
+                Apollo Hospital
+              </span>
             </Link>
           </div>
         </div>

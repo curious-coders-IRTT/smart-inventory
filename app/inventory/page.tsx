@@ -6,6 +6,7 @@ interface Drug {
   id: number;
   drug_name: string;
   current_stock: number;
+  threshold: number | null;
   created_at: string;
   last_updated: string;
 }
@@ -20,20 +21,21 @@ interface BranchData {
 interface AddStockModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: { drug_name: string; current_stock: number; threshold_level: number }) => void;
+  onSubmit: (data: { drug_name: string; current_stock: number; threshold: number }) => void;
   branch: string;
 }
 
 const AddStockModal: React.FC<AddStockModalProps> = ({ isOpen, onClose, onSubmit, branch }) => {
   const [formData, setFormData] = useState({
     drug_name: '',
-    current_stock: 0
+    current_stock: 0,
+    threshold: 100 // default threshold value
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(formData);
-    setFormData({ drug_name: '', current_stock: 0 });
+    setFormData({ drug_name: '', current_stock: 0, threshold: 100 });
   };
 
   if (!isOpen) return null;
@@ -63,6 +65,19 @@ const AddStockModal: React.FC<AddStockModalProps> = ({ isOpen, onClose, onSubmit
               type="number"
               value={formData.current_stock}
               onChange={(e) => setFormData({ ...formData, current_stock: parseInt(e.target.value) })}
+              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+              min="0"
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Threshold Level
+            </label>
+            <input
+              type="number"
+              value={formData.threshold}
+              onChange={(e) => setFormData({ ...formData, threshold: parseInt(e.target.value) })}
               className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
               min="0"
@@ -133,7 +148,7 @@ export default function InventoryPage() {
     fetchData();
   }, []);
 
-  const handleAddStock = async (data: { drug_name: string; current_stock: number; threshold_level: number }) => {
+  const handleAddStock = async (data: { drug_name: string; current_stock: number; threshold: number }) => {
     try {
       const response = await fetch('/api/drugs', {
         method: 'POST',
@@ -233,17 +248,15 @@ export default function InventoryPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      drug.current_stock > drug.threshold_level 
-                        ? 'bg-green-100 text-green-800'
-                        : drug.current_stock > (drug.threshold_level / 2)
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : 'bg-red-100 text-red-800'
+                      drug.threshold === null ? 
+                        (drug.current_stock > 100 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800') :
+                        drug.current_stock >= drug.threshold ? 
+                          'bg-green-100 text-green-800' : 
+                          'bg-yellow-100 text-yellow-800'
                     }`}>
-                      {drug.current_stock > drug.threshold_level 
-                        ? 'In Stock'
-                        : drug.current_stock > (drug.threshold_level / 2)
-                        ? 'Low Stock'
-                        : 'Critical'}
+                      {drug.threshold === null ? 
+                        (drug.current_stock > 100 ? 'In Stock' : 'Low Stock') :
+                        drug.current_stock >= drug.threshold ? 'In Stock' : 'Low Stock'}
                     </span>
                   </td>
                 </tr>
@@ -257,15 +270,11 @@ export default function InventoryPage() {
         <div className="flex items-center space-x-4">
           <div className="flex items-center">
             <span className="w-3 h-3 bg-green-100 rounded-full mr-2"></span>
-            <span>In Stock ({'>'}Threshold)</span>
+            <span>In Stock (≥ Threshold)</span>
           </div>
           <div className="flex items-center">
             <span className="w-3 h-3 bg-yellow-100 rounded-full mr-2"></span>
-            <span>Low Stock ({'>'}Half Threshold)</span>
-          </div>
-          <div className="flex items-center">
-            <span className="w-3 h-3 bg-red-100 rounded-full mr-2"></span>
-            <span>Critical ({'<'}Half Threshold)</span>
+            <span>Low Stock (&lt; Threshold)</span>
           </div>
         </div>
       </div>

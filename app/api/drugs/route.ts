@@ -7,19 +7,19 @@ const pool = new Pool({
 
 export async function POST(request: Request) {
   try {
-    const { drug_name, current_stock, branch } = await request.json();
+    const { drug_name, current_stock, threshold, branch } = await request.json();
     const tableName = `apollo_${branch}`;
     
     // Current timestamp will be used for both created_at and last_updated
     const now = new Date().toISOString();
 
     const query = `
-      INSERT INTO ${tableName} (drug_name, current_stock, created_at, last_updated)
-      VALUES ($1, $2, $3, $4)
+      INSERT INTO ${tableName} (drug_name, current_stock, threshold, created_at, last_updated)
+      VALUES ($1, $2, $3, $4, $5)
       RETURNING *
     `;
 
-    const values = [drug_name, current_stock, now, now];
+    const values = [drug_name, current_stock, threshold, now, now];
     
     const result = await pool.query(query, values);
     

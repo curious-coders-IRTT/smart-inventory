@@ -25,6 +25,7 @@ export async function POST(request: Request) {
       max_tokens: 500,
     });
 
+    
     return NextResponse.json({
       answer: completion.choices[0].message.content
     });

@@ -248,15 +248,9 @@ export default function InventoryPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      drug.threshold === null ? 
-                        (drug.current_stock > 100 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800') :
-                        drug.current_stock >= drug.threshold ? 
-                          'bg-green-100 text-green-800' : 
-                          'bg-yellow-100 text-yellow-800'
+                      drug.current_stock >= (drug.threshold || 100) ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
                     }`}>
-                      {drug.threshold === null ? 
-                        (drug.current_stock > 100 ? 'In Stock' : 'Low Stock') :
-                        drug.current_stock >= drug.threshold ? 'In Stock' : 'Low Stock'}
+                      {drug.current_stock >= (drug.threshold || 100) ? 'In Stock' : 'Low Stock'}
                     </span>
                   </td>
                 </tr>

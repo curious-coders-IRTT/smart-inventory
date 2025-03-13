@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Layout from '../components/Layout';
 
 interface Drug {
   id: number;
@@ -187,27 +188,31 @@ export default function InventoryPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="text-xl">Loading inventory data...</div>
-      </div>
+      <Layout>
+        <div className="flex justify-center items-center min-h-screen">
+          <div className="text-xl">Loading inventory data...</div>
+        </div>
+      </Layout>
     );
   }
 
   if (error) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="text-xl text-red-600">{error}</div>
-      </div>
+      <Layout>
+        <div className="flex justify-center items-center min-h-screen">
+          <div className="text-xl text-red-600">{error}</div>
+        </div>
+      </Layout>
     );
   }
 
   const currentData = getCurrentBranchData();
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+    <Layout>
+      <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Apollo Hospital Drug Inventory</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Drug Inventory</h1>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
             <select
               value={selectedBranch}
@@ -285,6 +290,6 @@ export default function InventoryPage() {
           branch={selectedBranch}
         />
       </div>
-    </div>
+    </Layout>
   );
 }

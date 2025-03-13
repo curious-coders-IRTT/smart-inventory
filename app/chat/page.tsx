@@ -2,6 +2,7 @@
 
 import React, { useState, KeyboardEvent } from 'react';
 import OpenAI from 'openai';
+import Layout from '../components/Layout';
 
 interface Message {
   text: string;
@@ -152,87 +153,91 @@ Please provide a clear and concise answer based on the data provided. If compari
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <h1 className="text-3xl font-bold mb-8">Apollo Hospital Chat Assistant</h1>
-      
-      {/* Branch Selection */}
-      <div className="mb-6">
-        <label htmlFor="branch" className="block text-sm font-medium text-gray-700 mb-2">
-          Select Branch
-        </label>
-        <select
-          id="branch"
-          value={selectedBranch}
-          onChange={(e) => setSelectedBranch(e.target.value)}
-          className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="all">All Branches</option>
-          {SAMPLE_BRANCHES.map((branch) => (
-            <option key={branch.id} value={branch.id}>
-              {branch.name}
-            </option>
-          ))}
-        </select>
-      </div>
+    <Layout>
+      <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">Chat Assistant</h1>
+          
+          {/* Branch Selection */}
+          <div className="mb-6">
+            <label htmlFor="branch" className="block text-sm font-medium text-gray-700 mb-2">
+              Select Branch
+            </label>
+            <select
+              id="branch"
+              value={selectedBranch}
+              onChange={(e) => setSelectedBranch(e.target.value)}
+              className="w-full sm:w-auto px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            >
+              <option value="all">All Branches</option>
+              {SAMPLE_BRANCHES.map((branch) => (
+                <option key={branch.id} value={branch.id}>
+                  {branch.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-      {/* Chat Messages */}
-      <div className="bg-white rounded-lg shadow-lg p-4 mb-4 h-[500px] overflow-y-auto">
-        {messages.map((message, index) => (
-          <div
-            key={index}
-            className={`mb-4 ${
-              message.isUser ? 'text-right' : 'text-left'
-            }`}
-          >
-            <div
-              className={`inline-block p-3 rounded-lg ${
-                message.isUser
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-100 text-gray-800'
+          {/* Chat Messages */}
+          <div className="bg-white rounded-lg shadow-lg p-4 mb-4 h-[500px] overflow-y-auto">
+            {messages.map((message, index) => (
+              <div
+                key={index}
+                className={`mb-4 ${
+                  message.isUser ? 'text-right' : 'text-left'
+                }`}
+              >
+                <div
+                  className={`inline-block p-3 rounded-lg ${
+                    message.isUser
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-gray-100 text-gray-800'
+                  }`}
+                >
+                  <p className="text-sm">{message.text}</p>
+                  <span className="text-xs opacity-75">
+                    {message.timestamp.toLocaleTimeString()}
+                  </span>
+                </div>
+              </div>
+            ))}
+            {isLoading && (
+              <div className="text-left">
+                <div className="inline-block p-3 rounded-lg bg-gray-100">
+                  <div className="flex space-x-2">
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100"></div>
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200"></div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Input Area */}
+          <div className="flex space-x-4">
+            <input
+              type="text"
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Type your question here..."
+              className="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <button
+              onClick={handleSendMessage}
+              disabled={isLoading || !inputMessage.trim()}
+              className={`px-6 py-3 rounded-lg font-semibold text-white ${
+                isLoading || !inputMessage.trim()
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-blue-500 hover:bg-blue-600'
               }`}
             >
-              <p className="text-sm">{message.text}</p>
-              <span className="text-xs opacity-75">
-                {message.timestamp.toLocaleTimeString()}
-              </span>
-            </div>
+              Send
+            </button>
           </div>
-        ))}
-        {isLoading && (
-          <div className="text-left">
-            <div className="inline-block p-3 rounded-lg bg-gray-100">
-              <div className="flex space-x-2">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100"></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200"></div>
-              </div>
-            </div>
-          </div>
-        )}
+        </div>
       </div>
-
-      {/* Input Area */}
-      <div className="flex space-x-4">
-        <input
-          type="text"
-          value={inputMessage}
-          onChange={(e) => setInputMessage(e.target.value)}
-          onKeyPress={handleKeyPress}
-          placeholder="Type your question here..."
-          className="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <button
-          onClick={handleSendMessage}
-          disabled={isLoading || !inputMessage.trim()}
-          className={`px-6 py-3 rounded-lg font-semibold text-white ${
-            isLoading || !inputMessage.trim()
-              ? 'bg-gray-400 cursor-not-allowed'
-              : 'bg-blue-500 hover:bg-blue-600'
-          }`}
-        >
-          Send
-        </button>
-      </div>
-    </div>
+    </Layout>
   );
 }
